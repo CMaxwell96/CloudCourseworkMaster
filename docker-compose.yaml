@@ -1,0 +1,120 @@
+version: '3'
+
+services:
+node1:
+        hostname: node1
+        container_name: "node1"
+        build: ./nodejs
+        ports:          - "81:3000"
+        volumes:         - ./nodejs/src:/usr/src/app
+        entrypoint:  [ "/bin/sh", "-c", "pm2-runtime dist.js --watch"]
+        
+node2:
+        container_name: "node2"
+        hostname: node2
+        build: ./nodejs
+         ports:         - "82:3000"
+         volumes:         - ./nodejs/src:/usr/src/app
+         entrypoint:  [ "/bin/sh", "-c", "pm2-runtime dist.js --watch"]
+      
+node3:
+        hostname: node3
+        container_name: "node3"
+        build: ./nodejs
+        ports:        - "83:3000"
+        volumes:        - ./nodejs/src:/usr/src/app
+        entrypoint:  [ "/bin/sh", "-c", "pm2-runtime dist.js --watch"]
+nginx:
+        container_name: nginx
+        build: ./nginx
+        ports:        - "80:80"
+        depends_on:
+                - node1
+                - node2
+                - node3
+        
+mongo1:
+        hostname: mongo1
+        container_name: localmongo1
+        image: mongo:4.0-xenial
+        ports:          - "40001:27017"
+        restart: always
+        entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+mongo2:
+        hostname: mongo2
+        container_name: localmongo2
+        image: mongo:4.0-xenial
+        ports:    - "40002:27017"
+        restart: always
+        entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+mongo3:
+        hostname: mongo3
+        container_name: localmongo3
+        image: mongo:4.0-xenial
+        ports:   - "40003:27017"
+        restart: always
+        entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+ mongosetup:
+        image: mongo:4.0-xenial
+        depends_on:
+                  - mongo1
+                  - mongo2
+                  - mongo3
+        volumes:          - ./nodejs/src/scripts:/scripts
+        restart: "no"
+        entrypoint: [ "bash", "/scripts/mongo_setup.sh"]
+        
+stats:
+        image: bitnami/rabbitmq
+        environment:
+                - RABBITMQ_NODE_TYPE=stats
+                - RABBITMQ_NODE_NAME=rabbit@stats
+                - RABBITMQ_ERL_COOKIE=s3cr3tc00ki3
+        volumes:
+                - 'rabbitmqstats_data:/bitnami'
+        
+queue-ram1:
+        image: bitnami/rabbitmq
+        environment:
+                        - RABBITMQ_NODE_TYPE=queue-ram
+                        - RABBITMQ_NODE_NAME=rabbit@queue-ram1
+                        - RABBITMQ_CLUSTER_NODE_NAME=rabbit@stats
+                        - RABBITMQ_ERL_COOKIE=s3cr3tc00ki3
+        volumes:
+                        - 'rabbitmqram1_data:/bitnami'
+        depends_on:
+                        - stats       
+        
+ queue-disc1:
+        image: bitnami/rabbitmq
+        environment:
+                - RABBITMQ_NODE_TYPE=queue-disc
+                - RABBITMQ_NODE_NAME=rabbit@queue-disc1
+                - RABBITMQ_CLUSTER_NODE_NAME=rabbit@stats
+                - RABBITMQ_ERL_COOKIE=s3cr3tc00ki3
+        volumes:
+                - 'rabbitmqdisc1_data:/bitnami'
+        depends_on:
+                - stats
+  
+haproxy:
+        image: haproxy:1.7
+        volumes: - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+        depends_on:
+                - stats
+                - queue-ram1
+                - queue-disc1
+                ports:
+                - 15672:15672
+                - 5672:5672
+volumes:
+        rabbitmqstats_data:
+                driver: local
+        rabbitmqram1_data:
+                driver: local
+        rabbitmqdisc1_data:
+                driver: local
+        
