@@ -17,6 +17,15 @@ var myHostName = os.hostname();
 var zmq = require("zeromq"),
   sock = zmq.socket("pub");
 
+var url = 'http://192.168.56.111:2375';
+var request = require('request');
+  
+
+sock.bindSync("tcp://0.0.0.0:3000");
+console.log("ZeroMQ h Publisher bound to " + nodes[myhostname].ip + "port 3000");
+
+console.log(myHostName);
+
 var amqp = require('amqplib/callback_api');
 
 var NodeNumber = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
@@ -45,7 +54,7 @@ setInterval(function () {
       });
     }, 10000);
     
-    amqp.connect('amqp://test:test@192.168.56.7', function(error0, connection) {
+amqp.connect('amqp://test:test@192.168.56.7', function(error0, connection) {
       if (error0) {
               throw error0;
             }
@@ -100,12 +109,12 @@ function nodeLeadershipElection() {
   }
   console.log(myHostName + (nodeLeader ? " I AM the Leader:)":" I am NOT Leader:("));
 }
-Interval(nodeLeadershipElection, 15000);
+setInterval(nodeLeadershipElection, 15000);
 
-Interval(function() {
+setInterval(function() {
   var date = Date.now();
   for (var i = 0; i < Nodes.length; i++) {
-	if(date - Nodes[i].timestamp > 60*1000) {
+	if(date - Nodes[i].timestamp > 60000) {
 		console.log(Nodes[i].hostName + " Node has been down for 1 minute and must restart");
 		Nodes.splice(i);
 		if (!nodeLeader) {
