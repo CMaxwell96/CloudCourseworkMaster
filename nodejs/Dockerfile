@@ -5,5 +5,6 @@ EXPOSE 3000
 COPY src/ .
 RUN ls -la /usr/src/app/*
 RUN npm install express mongoose 
+RUN npm install zeromq@5 express
 RUN npm install pm2 -g
 CMD [ "pm2-runtime", "mongo.js",]
