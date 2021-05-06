@@ -9,8 +9,8 @@ const bodyParser = require('body-parser');
 const app = express()
 const port = 3000
 
-const connectionString = 'mongodb://localmongo1:27017,localmongo2:27017,localmongo3:27017/sweetShopDB?replicaSet=cfgrs';
-
+//const connectionString = 'mongodb://localmongo1:27017,localmongo2:27017,localmongo3:27017/sweetShopDB?replicaSet=cfgrs';
+const connectionString = 'mongodb://cloudmaster:Fg8anQmRMDyakae6iPgjdrcvUHwMaWDIpahWCFDMl8QMpfWjW2ULzMrxDCBmNtWGDq66NeDXwXZsrysqjLiSwQ==@cloudmaster.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@cloudmaster@'
 var os = require("os");
 var myHostName = os.hostname();
 
