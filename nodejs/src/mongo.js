@@ -1,32 +1,130 @@
-//Object data modelling library for mongo
 const mongoose = require('mongoose');
 
-//Mongo db client library
-//const MongoClient  = require('mongodb');
+const MongoClient  = require('mongodb');
 
-//Express web service library
 const express = require('express')
 
-//used to parse the server response from json to object.
 const bodyParser = require('body-parser');
 
-//instance of express and port to use for inbound connections.
 const app = express()
 const port = 3000
 
-//connection string listing the mongo servers. This is an alternative to using a load balancer. THIS SHOULD BE DISCUSSED IN YOUR ASSIGNMENT.
 const connectionString = 'mongodb://localmongo1:27017,localmongo2:27017,localmongo3:27017/sweetShopDB?replicaSet=cfgrs';
+
+var os = require("os");
+var myHostName = os.hostname();
+
+var zmq = require("zeromq"),
+  sock = zmq.socket("pub");
+
+var amqp = require('amqplib/callback_api');
+
+var NodeNumber = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
+toSend = {"hostName" : myHostName, "message": "Node -> Alive","NodeNumber":NodeNumber} ;
+let Nodes = [];
 
 setInterval(function () {
 
-  console.log(`Intervals are used to fire a function for the lifetime of an application.`);
+  amqp.connect('amqp://test:test@192.168.56.111', function(error0, connection){
+    if (error0) {
+            throw error0;
+          }
+          connection.createChannel(function(error1, channel) {
+                  if (error1) {
+                            throw error1;
+                          }
+            var exchange = 'logs';
+            var message = JSON.stringify(toSend);
+    
+                  channel.assertExchange(exchange, 'fanout', {
+                            durable: false
+                          });
+            channel.publish(exchange, '', Buffer.from(message));
+            console.log(myHostName, "Message is Sending...");
+            });
+      });
+    }, 10000);
+    
+    amqp.connect('amqp://test:test@192.168.56.7', function(error0, connection) {
+      if (error0) {
+              throw error0;
+            }
+      connection.createChannel(function(error1, channel) {
+              if (error1) {
+                        throw error1;
+                      }
+              var exchange = 'logs';
 
-}, 3000);
+              channel.assertExchange(exchange, 'fanout', {
+                        durable: false
+                      });
 
-//tell express to use the body parser. Note - This function was built into express but then moved to a seperate package.
+              channel.assertQueue('', {
+                        exclusive: true
+                      }, function(error2, q) {
+                                if (error2) {
+                                            throw error2;
+                                          }
+                                console.log(myHostName + " Waiting for Message Response", q.queue);
+                                channel.bindQueue(q.queue, exchange, '');
+
+              channel.consume(q.queue, function(msg) {
+                         if(msg.content) {
+   
+                                var MSGstring = msg.content.toString();
+                                var MSGparse = JSON.parse(MSGstring);
+                        if (MSGparse.hostName != myHostName) {
+                        Nodes.some(node => node.hostName === nodeObj.hostName) ? 
+                        (Nodes.find(m => m.hostName === MSGparse.hostName)).timestamp = Date.now() : nodes.push({"hostname":MSGparse.hostName,"ID":MSGparse.NodeNumber,"timestamp":Date.now(),"leader":0})
+                                              console.log(nodes);
+          }
+    }}, 
+    {
+                                            noAck: true
+                                          });
+                    });
+  });
+});
+            
+var nodeLeader = 0;
+function nodeLeadershipElection() {
+	nodeLeader = 0;
+  for (var i = 0; i < Nodes.length; i++) {
+  	if(Nodes[i].ID > NodeNumber) {
+      nodeLeader = 0;
+		break;
+	}
+	else {
+		nodeLeader = 1;
+	}
+  }
+  console.log(myHostName + (nodeLeader ? " I AM the Leader:)":" I am NOT Leader:("));
+}
+Interval(nodeLeadershipElection, 15000);
+
+Interval(function() {
+  var date = Date.now();
+  for (var i = 0; i < Nodes.length; i++) {
+	if(date - Nodes[i].timestamp > 60*1000) {
+		console.log(Nodes[i].hostName + " Node has been down for 1 minute and must restart");
+		Nodes.splice(i);
+		if (!nodeLeader) {
+			leadershipElection();
+		}
+		if (nodeLeader) {
+			console.log("Bring Node back online")
+		}
+	} else {
+		console.log(Nodes[i].hostName + " are currently online");
+	}
+  }
+}, 60000);
+
+
+
 app.use(bodyParser.json());
 
-//connect to the cluster
+
 mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
@@ -49,7 +147,7 @@ var vidModel = mongoose.model('Video', vidSchema, 'Video');
 
 
 app.get('/', (req, res) => {
-  stockModel.find({}, 'item price quantity lastName', (err, video) => {
+  stockModel.find({}, 'Account_ID UserName Title_ID Interaction_DateTime Interaction_Point Interaction_Type', (err, video) => {
     if (err) return handleError(err);
     res.send(JSON.stringify(video))
   })
