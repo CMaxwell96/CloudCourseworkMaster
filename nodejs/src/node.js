@@ -1,11 +1,11 @@
 {
     "node1"; {
-        "hostname"; "node1"
+        "hostName"; "node1"
     }
     "node2"; {
-        "hostname"; "node2"
+        "hostName"; "node2"
     }
     "node3"; {
-        "hostname"; "node3"
+        "hostName"; "node3"
     }
 }
