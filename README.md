@@ -10,4 +10,4 @@
 4. Typing "console.log(Nodes);" again should list all three nodes and should identify which is the leader node
 5. If a node/container goes down or via the "sudo docker container stop node[X]" or "sudo docker container rm        node[X]"
    command, the system should create a new Container after a minute via the containerUp() function.
-6. To identify and few the created container run "sudo docker container ls"
+6. To identify and view the created container run "sudo docker container ls"
