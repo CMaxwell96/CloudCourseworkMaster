@@ -132,6 +132,7 @@ setInterval(function() {
 }, 60000);
 
 function startContainer() {
+  console.log("Creating New Container");
   var containerUp = {
       uri: url + "/v1.40/containers/containerUp",
     method: 'POST',
