@@ -1,7 +1,10 @@
 const { CosmosClient } = require("@azure/cosmos");
 
-const endpoint = "https://cloudmaster.mongo.cosmos.azure.com:443/";
-const key = "916fe150-72fe-49b8-82e4-cdc64f38b4f9";
+const endpoint = "https://sweetshop234544.documents.azure.com:443/";
+const key = "oTFZezCMCai5T945UKikofGzxlY26hCmagb9NT3gmNTuTJBf0I9c355lPHqFV1w==";
+
+// const endpoint = "https://cloudmaster.mongo.cosmos.azure.com:443/";
+// const key = "916fe150-72fe-49b8-82e4-cdc64f38b4f9";
 const client = new CosmosClient({ endpoint, key });
 
 

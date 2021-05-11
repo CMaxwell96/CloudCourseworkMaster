@@ -9,8 +9,8 @@ const bodyParser = require('body-parser');
 const app = express()
 const port = 3000
 
-//const connectionString = 'mongodb://localmongo1:27017,localmongo2:27017,localmongo3:27017/sweetShopDB?replicaSet=cfgrs';
-const connectionString = 'mongodb://cloudmaster:Fg8anQmRMDyakae6iPgjdrcvUHwMaWDIpahWCFDMl8QMpfWjW2ULzMrxDCBmNtWGDq66NeDXwXZsrysqjLiSwQ==@cloudmaster.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@cloudmaster@'
+const connectionString = 'mongodb://localmongo1:27017,localmongo2:27017,localmongo3:27017/sweetShopDB?replicaSet=cfgrs';
+//const connectionString = 'mongodb://cloudmaster:Fg8anQmRMDyakae6iPgjdrcvUHwMaWDIpahWCFDMl8QMpfWjW2ULzMrxDCBmNtWGDq66NeDXwXZsrysqjLiSwQ==@cloudmaster.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@cloudmaster@'
 var os = require("os");
 var myHostName = os.hostname();
 
@@ -22,7 +22,7 @@ var request = require('request');
   
 
 sock.bindSync("tcp://0.0.0.0:3000");
-console.log("ZeroMQ h Publisher bound to " + nodes[myhostname].ip + "port 3000");
+console.log("ZeroMQ h Publisher bound to " + nodes[myHostName].ip + "port 3000");
 
 console.log(myHostName);
 
@@ -97,6 +97,7 @@ amqp.connect('amqp://test:test@192.168.56.7', function(error0, connection) {
             
 var nodeLeader = 0;
 function nodeLeadershipElection() {
+  console.log("Leadership Election");
 	nodeLeader = 0;
   for (var i = 0; i < Nodes.length; i++) {
   	if(Nodes[i].ID > NodeNumber) {
@@ -115,13 +116,14 @@ setInterval(function() {
   var date = Date.now();
   for (var i = 0; i < Nodes.length; i++) {
 	if(date - Nodes[i].timestamp > 60000) {
-		console.log(Nodes[i].hostName + " Node has been down for 1 minute and must restart");
+		console.log(Nodes[i].hostName + " Node is DOWN and must restart");
 		Nodes.splice(i);
 		if (!nodeLeader) {
-			leadershipElection();
+			nodeLeadershipElection();
 		}
 		if (nodeLeader) {
 			console.log("Bring Node back online")
+      containerUp();
 		}
 	} else {
 		console.log(Nodes[i].hostName + " are currently online");
@@ -129,7 +131,13 @@ setInterval(function() {
   }
 }, 60000);
 
-
+function startContainer() {
+  var containerUp = {
+      uri: url + "/v1.40/containers/containerUp",
+    method: 'POST',
+    json: {"Image": "node1", "CMD": ["pm2-runtime", "mongo.js"] }
+  };
+  
 
 app.use(bodyParser.json());
 
@@ -152,8 +160,6 @@ var vidSchema = new Schema({
 });
 
 var vidModel = mongoose.model('Video', vidSchema, 'Video');
-
-
 
 app.get('/', (req, res) => {
   stockModel.find({}, 'Account_ID UserName Title_ID Interaction_DateTime Interaction_Point Interaction_Type', (err, video) => {
@@ -181,4 +187,4 @@ app.delete('/', (req, res) => {
 //bind the express web service to the port specified
 app.listen(port, () => {
   console.log(`Express Application listening at port ` + port)
-})
+})}
